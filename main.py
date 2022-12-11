@@ -11,7 +11,6 @@
 
 import requests
 from bs4 import BeautifulSoup
-import xlrd
 import openpyxl
 
 # 전역 변수 선언
@@ -43,15 +42,16 @@ data = res.json()
 print(data)
 '''
 
+# 주식 DB 읽기
+workbook = openpyxl.load_workbook("/workspace/PythonTrader/stocksDB.xlsx")
+sheet = workbook.active
+rows = sheet.max_row
+cols = sheet.max_column
 
+## 주식 명으로 주식코드 가져오기
+target_name = input("주식명: ").upper()
 
-# Define variable to load the dataframe
-dataframe = openpyxl.load_workbook("/workspace/PythonTrader/stocksDB.xlsx")
-
-# Define variable to read sheet
-dataframe1 = dataframe.active
-
-# Iterate the loop to read the cell values
-
-for row in dataframe1.iter_rows(0, dataframe1.max_row):
-    print(row[1].value)
+for row in range(1, rows):
+    comp_name = sheet.cell(row, 2).value.upper()
+    if comp_name == target_name:
+        print(target_name, ":", sheet.cell(row, 1).value)
