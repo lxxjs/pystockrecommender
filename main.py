@@ -12,12 +12,16 @@
 import requests
 from bs4 import BeautifulSoup
 import xlrd
-import pandas as pd
+import openpyxl
+
+# 전역 변수 선언
+## 할인율
 discountRateLocation: int  = 87 #BBB- 5y
 KISlink: str = 'https://www.kisrating.com/ratingsStatistics/statics_spread.do'
 
+## 다트 재무제표
 DART_API_Key = 'b64695f3f2a79d07bde772ffa630f935e0d050c0'
-samsung = '00126380'
+
 
 
 def getDiscountRate(link, location) -> float:
@@ -25,6 +29,9 @@ def getDiscountRate(link, location) -> float:
     soup = BeautifulSoup(html, "html.parser")
     result = float(soup.select('td.ar.pr40')[location].text)
     return result
+
+a = getDiscountRate(KISlink, discountRateLocation)
+print("Today's discount rate :", a)
 
 
 '''
@@ -35,10 +42,16 @@ print(res)
 data = res.json()
 print(data)
 '''
-a = getDiscountRate(KISlink, discountRateLocation)
-print(a)
 
-raw_data = pd.read_excel("/workspace/PythonTrader/stocksDB.xlsx")
-# print(raw_data)
-col = raw_data.columns
-print(col[2])
+
+
+# Define variable to load the dataframe
+dataframe = openpyxl.load_workbook("/workspace/PythonTrader/stocksDB.xlsx")
+
+# Define variable to read sheet
+dataframe1 = dataframe.active
+
+# Iterate the loop to read the cell values
+
+for row in dataframe1.iter_rows(0, dataframe1.max_row):
+    print(row[1].value)
