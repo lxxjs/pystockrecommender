@@ -8,10 +8,11 @@
 - 적정주가 = 기업가치 / 유통주식수
 
 """
-
+from urllib import parse
 import requests
 from bs4 import BeautifulSoup
 import openpyxl
+import pandas as pd
 
 # 전역 변수 선언
 ## 할인율
@@ -48,13 +49,13 @@ sheet = workbook.active
 rows = sheet.max_row
 cols = sheet.max_column
 
-## 주식 명으로 주식코드 가져오기
-target_name = input("주식명: ").upper()
+# ## 주식 명으로 주식코드 가져오기
+# target_name = input("주식명: ").upper()
 
-for row in range(1, rows):
-    comp_name = sheet.cell(row, 2).value.upper()
-    if comp_name == target_name:
-        print(target_name, ":", sheet.cell(row, 1).value)
+# for row in range(1, rows):
+#     comp_name = sheet.cell(row, 2).value.upper()
+#     if comp_name == target_name:
+#         print(target_name, ":", sheet.cell(row, 1).value)
 
 
 # hyunsik
@@ -68,8 +69,8 @@ dataframe1 = dataframe.active
 
 # Iterate the loop to read the cell values
 
-for row in dataframe1.iter_rows(0, dataframe1.max_row):
-    print(row[1].value)
+# for row in dataframe1.iter_rows(0, dataframe1.max_row):
+#     print(row[1].value)
 
 def get_fnguide(code) :
      get_param = {
@@ -93,7 +94,7 @@ def get_roe(code) :
 def get_roe3(code) :
     roes = get_roe(code)
     Sum = 0
-    for i in (0,3):
+    for i in range(2,len(roes)):
         Sum += float(roes[i])
     return Sum / 3
     
@@ -101,6 +102,10 @@ def get_roe3(code) :
 DB = openpyxl.load_workbook('/workspace/PythonTrader/stocksDB.xlsx')
 sheet = DB['Sheet1']
 print(sheet.cell(1,1).value)
+sheet.insert_cols(4)
 
-print(get_roe3('005930'))
+# for i in range(2,rows):
+#     code = sheet.cell(i,1).value
+#     roe_3 = get_roe3(code)
+#     sheet.cell(i,4).value = roe_3
 
