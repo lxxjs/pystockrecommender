@@ -46,21 +46,17 @@ print(data)
 '''
 
 # 주식 DB 읽기
-workbook = openpyxl.load_workbook("/workspace/PythonTrader/stocksDB.xlsx")
+workbook = openpyxl.load_workbook("/workspace/PythonTrader/stocksDB_edit.xlsx")
 sheet = workbook.active
 rows = sheet.max_row
 cols = sheet.max_column
-
-
-# ## 주식 명으로 주식코드 가져오기
-# target_name = input("주식명: ").upper()
 
 '''
 ## 주식 명으로 주식코드 가져오기
 target_name = input("주식명: ").upper()
 
 
-# for row in range(1, rows):
+# for row in range(2, rows):
 #     comp_name = sheet.cell(row, 2).value.upper()
 #     if comp_name == target_name:
 #         print(target_name, ":", sheet.cell(row, 1).value)
@@ -69,9 +65,7 @@ target_name = input("주식명: ").upper()
 
 
 
-# for row in dataframe1.iter_rows(0, dataframe1.max_row):
-#     print(row[1].value)
-=======
+
 def get_fnguide(code):
     get_param = {
         'pGB':1,
@@ -98,26 +92,18 @@ def get_roe(code):
 
 def get_roe_weighted_mean(code):
     roes = get_roe(code)
-
-    Sum = 0
+    sum = 0
     for i in range(2,len(roes)):
-        Sum += float(roes[i])
-    return Sum / 3
-    
+        sum += float(roes[i])
+    return sum / 3
 
-DB = openpyxl.load_workbook('/workspace/PythonTrader/stocksDB.xlsx')
-sheet = DB['Sheet1']
-print(sheet.cell(1,1).value)
-sheet.insert_cols(4)
 
-# for i in range(2,rows):
-#     code = sheet.cell(i,1).value
-#     roe_3 = get_roe3(code)
-#     sheet.cell(i,4).value = roe_3
 
-    sum = float(roes[0]) + 2 * float(roes[1]) + 3 * float(roes[2])
-    weighted_mean = sum / 6.00
-    return weighted_mean
+for i in range(2,10):
+    this_cell = sheet.cell(i,4)
+    code = sheet.cell(i,1).value
+    this_cell.value = get_equity_capital(code)
+    print(sheet.cell(i,2).value, ":", this_cell.value, get_equity_capital(code))
 
 
 print(get_roe_weighted_mean("005930"))
