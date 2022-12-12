@@ -9,6 +9,8 @@
 
 """
 from urllib import parse
+
+import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 import openpyxl
@@ -49,50 +51,54 @@ sheet = workbook.active
 rows = sheet.max_row
 cols = sheet.max_column
 
+
 # ## 주식 명으로 주식코드 가져오기
 # target_name = input("주식명: ").upper()
+
+'''
+## 주식 명으로 주식코드 가져오기
+target_name = input("주식명: ").upper()
+
 
 # for row in range(1, rows):
 #     comp_name = sheet.cell(row, 2).value.upper()
 #     if comp_name == target_name:
 #         print(target_name, ":", sheet.cell(row, 1).value)
 
+'''
 
-# hyunsik
 
-
-# Define variable to load the dataframe
-dataframe = openpyxl.load_workbook("/workspace/PythonTrader/stocksDB.xlsx")
-
-# Define variable to read sheet
-dataframe1 = dataframe.active
-
-# Iterate the loop to read the cell values
 
 # for row in dataframe1.iter_rows(0, dataframe1.max_row):
 #     print(row[1].value)
+=======
+def get_fnguide(code):
+    get_param = {
+        'pGB':1,
+        'gicode':'A%s'%(code),
+        'cID':'',
+        'MenuYn':'Y',
+        'ReportGB':'',
+        'NewMenuID':101,
+        'stkGb':701,
+    }
+    get_param = parse.urlencode(get_param)
+    url="http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?%s"%(get_param)
+    tables = pd.read_html(url, header=0)
+    return(tables)
 
-def get_fnguide(code) :
-     get_param = {
-         'pGB':1,
-         'gicode':'A%s'%(code),
-         'cID':'',
-         'MenuYn':'Y',
-         'ReportGB':'',
-         'NewMenuID':101,
-         'stkGb':701,
-     }
-     get_param = parse.urlencode(get_param)
-     url="http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?%s"%(get_param)
-     tables = pd.read_html(url, header=0)
-     return(tables)
 
-def get_roe(code) :
-    annual = get_fnguide(code)[11] # annual financial highlight table
-    return annual.iloc[18][1:6].tolist() # 최근 5개년 확정 ROE
+def get_equity_capital(code):
+    annual = get_fnguide(code)[11] # 연결-연간 재무제표
+    return annual.iloc[10][5]
 
-def get_roe3(code) :
+def get_roe(code):
+    annual = get_fnguide(code)[11] # 연결-연간 재무제표
+    return annual.iloc[18][3:6].tolist() # 최근 3개년 확정 ROE
+
+def get_roe_weighted_mean(code):
     roes = get_roe(code)
+
     Sum = 0
     for i in range(2,len(roes)):
         Sum += float(roes[i])
@@ -109,3 +115,10 @@ sheet.insert_cols(4)
 #     roe_3 = get_roe3(code)
 #     sheet.cell(i,4).value = roe_3
 
+    sum = float(roes[0]) + 2 * float(roes[1]) + 3 * float(roes[2])
+    weighted_mean = sum / 6.00
+    return weighted_mean
+
+
+print(get_roe_weighted_mean("005930"))
+print(get_equity_capital("005930"))
