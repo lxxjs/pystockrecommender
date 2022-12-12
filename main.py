@@ -56,7 +56,7 @@ cols = sheet.max_column
 target_name = input("주식명: ").upper()
 
 
-# for row in range(2, rows):
+# for row in range(2, rows + 1):
 #     comp_name = sheet.cell(row, 2).value.upper()
 #     if comp_name == target_name:
 #         print(target_name, ":", sheet.cell(row, 1).value)
@@ -83,8 +83,10 @@ def get_fnguide(code):
 
 
 def get_equity_capital(code):
-    annual = get_fnguide(code)[11] # 연결-연간 재무제표
-    return annual.iloc[10][5]
+    if len(get_fnguide(code)) > 10 and get_fnguide(code)[11].iloc[10][5]:
+        annual = get_fnguide(code)[11] # 연결-연간 재무제표
+        return annual.iloc[10][5]
+    return 0
 
 def get_roe(code):
     annual = get_fnguide(code)[11] # 연결-연간 재무제표
@@ -98,13 +100,14 @@ def get_roe_weighted_mean(code):
     return sum / 3
 
 
-
-for i in range(2,10):
+for i in range(826,rows + 1):
     this_cell = sheet.cell(i,4)
     code = sheet.cell(i,1).value
     this_cell.value = get_equity_capital(code)
-    print(sheet.cell(i,2).value, ":", this_cell.value, get_equity_capital(code))
+    print(sheet.cell(i,2).value, ":", this_cell.value)
+    workbook.save("/workspace/PythonTrader/stocksDB_edit.xlsx")
 
+workbook.close()
 
 print(get_roe_weighted_mean("005930"))
 print(get_equity_capital("005930"))
