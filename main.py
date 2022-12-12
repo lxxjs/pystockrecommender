@@ -9,10 +9,12 @@
 
 """
 from urllib import parse
+
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 import openpyxl
+import pandas as pd
 
 # 전역 변수 선언
 ## 할인율
@@ -49,19 +51,27 @@ sheet = workbook.active
 rows = sheet.max_row
 cols = sheet.max_column
 
+
+# ## 주식 명으로 주식코드 가져오기
+# target_name = input("주식명: ").upper()
+
 '''
 ## 주식 명으로 주식코드 가져오기
 target_name = input("주식명: ").upper()
 
-for row in range(1, rows):
-    comp_name = sheet.cell(row, 2).value.upper()
-    if comp_name == target_name:
-        print(target_name, ":", sheet.cell(row, 1).value)
+
+# for row in range(1, rows):
+#     comp_name = sheet.cell(row, 2).value.upper()
+#     if comp_name == target_name:
+#         print(target_name, ":", sheet.cell(row, 1).value)
 
 '''
 
 
 
+# for row in dataframe1.iter_rows(0, dataframe1.max_row):
+#     print(row[1].value)
+=======
 def get_fnguide(code):
     get_param = {
         'pGB':1,
@@ -77,6 +87,7 @@ def get_fnguide(code):
     tables = pd.read_html(url, header=0)
     return(tables)
 
+
 def get_equity_capital(code):
     annual = get_fnguide(code)[11] # 연결-연간 재무제표
     return annual.iloc[10][5]
@@ -87,6 +98,23 @@ def get_roe(code):
 
 def get_roe_weighted_mean(code):
     roes = get_roe(code)
+
+    Sum = 0
+    for i in range(2,len(roes)):
+        Sum += float(roes[i])
+    return Sum / 3
+    
+
+DB = openpyxl.load_workbook('/workspace/PythonTrader/stocksDB.xlsx')
+sheet = DB['Sheet1']
+print(sheet.cell(1,1).value)
+sheet.insert_cols(4)
+
+# for i in range(2,rows):
+#     code = sheet.cell(i,1).value
+#     roe_3 = get_roe3(code)
+#     sheet.cell(i,4).value = roe_3
+
     sum = float(roes[0]) + 2 * float(roes[1]) + 3 * float(roes[2])
     weighted_mean = sum / 6.00
     return weighted_mean
