@@ -9,20 +9,19 @@
 
 """
 from urllib import parse
-
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 import openpyxl
 import pandas as pd
+import datetime
 
-# 전역 변수 선언
+# 상수 선언
 ## 할인율
-discountRateLocation: int  = 87 #BBB- 5y
-KISlink: str = 'https://www.kisrating.com/ratingsStatistics/statics_spread.do'
-
+DISCOUNT_RATE_LOC: int = 87 #BBB- 5y
+KIS_LINK: str = 'https://www.kisrating.com/ratingsStatistics/statics_spread.do'
 ## 다트 재무제표
-DART_API_Key = 'b64695f3f2a79d07bde772ffa630f935e0d050c0'
+DART_API_KEY = 'b64695f3f2a79d07bde772ffa630f935e0d050c0'
 
 
 
@@ -32,7 +31,7 @@ def getDiscountRate(link, location) -> float:
     result = float(soup.select('td.ar.pr40')[location].text)
     return result
 
-a = getDiscountRate(KISlink, discountRateLocation)
+a = getDiscountRate(KIS_LINK, DISCOUNT_RATE_LOC)
 print("Today's discount rate :", a)
 
 
@@ -54,8 +53,6 @@ cols = sheet.max_column
 '''
 ## 주식 명으로 주식코드 가져오기
 target_name = input("주식명: ").upper()
-
-
 # for row in range(2, rows + 1):
 #     comp_name = sheet.cell(row, 2).value.upper()
 #     if comp_name == target_name:
@@ -63,8 +60,16 @@ target_name = input("주식명: ").upper()
 
 '''
 
-
-
+def check_data_date(this_obj):
+    if type(this_obj) == list:
+        if this_obj[0] == '2019/12' and this_list[1] == '2020/12' and this_list[2] == '2021/12':
+            return True
+        return False
+    elif type(this_obj) == str:
+        if this_obj == '2021/12':
+            return True
+        return False
+    return False
 
 def get_fnguide(code):
     get_param = {
@@ -85,11 +90,15 @@ def get_fnguide(code):
 def get_equity_capital(code):
     if len(get_fnguide(code)) > 10 and get_fnguide(code)[11].iloc[10][5]:
         annual = get_fnguide(code)[11] # 연결-연간 재무제표
-        return annual.iloc[10][5]
+        if check_data_date(annual.iloc[0][5]):
+            return annual.iloc[10][5]
+        return 0
     return 0
 
 def get_roe(code):
     annual = get_fnguide(code)[11] # 연결-연간 재무제표
+    if check_data_date(annual.iloc[0][3:6]):
+        print(annual.iloc[0][3:6])
     return annual.iloc[18][3:6].tolist() # 최근 3개년 확정 ROE
 
 def get_roe_weighted_mean(code):
@@ -100,14 +109,14 @@ def get_roe_weighted_mean(code):
     return sum / 3
 
 
-for i in range(826,rows + 1):
-    this_cell = sheet.cell(i,4)
+
+'''
+for i in range(1, rows + 1):
+    this_cell = sheet.cell(i,5)
     code = sheet.cell(i,1).value
-    this_cell.value = get_equity_capital(code)
+    this_cell.value = get_roe_weighted_mean(code)
     print(sheet.cell(i,2).value, ":", this_cell.value)
     workbook.save("/workspace/PythonTrader/stocksDB_edit.xlsx")
+'''
 
 workbook.close()
-
-print(get_roe_weighted_mean("005930"))
-print(get_equity_capital("005930"))
