@@ -23,6 +23,7 @@ KIS_LINK: str = 'https://www.kisrating.com/ratingsStatistics/statics_spread.do'
 ## 다트 재무제표
 DART_API_KEY = 'b64695f3f2a79d07bde772ffa630f935e0d050c0'
 
+STOCKS_DB_LOC = '/workspace/PythonTrader/stocksDB_all.xlsx'
 
 
 def getDiscountRate(link, location) -> float:
@@ -45,7 +46,7 @@ print(data)
 '''
 
 # 주식 DB 읽기
-workbook = openpyxl.load_workbook("/workspace/PythonTrader/stocksDB_edit.xlsx")
+workbook = openpyxl.load_workbook(STOCKS_DB_LOC)
 sheet = workbook.active
 rows = sheet.max_row
 cols = sheet.max_column
@@ -83,40 +84,54 @@ def get_fnguide(code):
     }
     get_param = parse.urlencode(get_param)
     url="http://comp.fnguide.com/SVO2/ASP/SVD_Main.asp?%s"%(get_param)
-    tables = pd.read_html(url, header=0)
+    try:
+        tables = pd.read_html(url, header=0)
+    except:
+        exceptional_table = []
+        return(exceptional_table)
     return(tables)
 
 
 def get_equity_capital(code):
-    if len(get_fnguide(code)) > 10 and get_fnguide(code)[11].iloc[10][5]:
+    try:
         annual = get_fnguide(code)[11] # 연결-연간 재무제표
         if check_data_date(annual.iloc[0][5]):
             return annual.iloc[10][5]
         return 0
-    return 0
+    except:
+        return 0
 
 def get_roe(code):
     annual = get_fnguide(code)[11] # 연결-연간 재무제표
-    if check_data_date(annual.iloc[0][3:6]):
-        print(annual.iloc[0][3:6])
-    return annual.iloc[18][3:6].tolist() # 최근 3개년 확정 ROE
+    try:
+        if check_data_date(annual.iloc[0][3:6]):
+            return annual.iloc[18][3:6].tolist() # 최근 3개년 확정 ROE
+    except:
+        return 0
 
 def get_roe_weighted_mean(code):
     roes = get_roe(code)
+    if roes == 0:
+        return 0
     sum = 0
     for i in range(2,len(roes)):
         sum += float(roes[i])
     return sum / 3
 
 
+def iterate_stocksDB(row_num, this_col):
+    for i in range(2, row_num + 1):
+        this_cell = sheet.cell(i,this_col)
+        code = sheet.cell(i,2).value #종목 코드 컬럼
+        if this_col == 7:
+            this_cell.value = get_equity_capital(code)
+            print(sheet.cell(i,1).value, "- Equity capital :", this_cell.value)
+        elif this_col == 8:
+            this_cell.value = get_roe_weighted_mean(code)
+            print(sheet.cell(i,1).value, "- Weighted 3y ROE mean :", this_cell.value)
+        workbook.save(STOCKS_DB_LOC)
 
-'''
-for i in range(1, rows + 1):
-    this_cell = sheet.cell(i,5)
-    code = sheet.cell(i,1).value
-    this_cell.value = get_roe_weighted_mean(code)
-    print(sheet.cell(i,2).value, ":", this_cell.value)
-    workbook.save("/workspace/PythonTrader/stocksDB_edit.xlsx")
-'''
+iterate_stocksDB(rows, 7)
+iterate_stocksDB(rows, 8)
 
 workbook.close()
