@@ -23,7 +23,7 @@ KIS_LINK: str = 'https://www.kisrating.com/ratingsStatistics/statics_spread.do'
 ## 다트 재무제표
 DART_API_KEY = 'b64695f3f2a79d07bde772ffa630f935e0d050c0'
 
-STOCKS_DB_LOC = '/workspace/PythonTrader/stocksDB_all.xlsx'
+STOCKS_DB_LOC = '/workspace/PythonTrader/stocksDB_all_text.xlsx'
 
 
 def getDiscountRate(link, location) -> float:
@@ -63,7 +63,7 @@ target_name = input("주식명: ").upper()
 
 def check_data_date(this_obj):
     if type(this_obj) == list:
-        if this_obj[0] == '2019/12' and this_list[1] == '2020/12' and this_list[2] == '2021/12':
+        if this_obj[0] == '2019/12' and this_obj[1] == '2020/12' and this_obj[2] == '2021/12':
             return True
         return False
     elif type(this_obj) == str:
@@ -114,24 +114,57 @@ def get_roe_weighted_mean(code):
     if roes == 0:
         return 0
     sum = 0
-    for i in range(2,len(roes)):
-        sum += float(roes[i])
-    return sum / 3
+    for i in range(0,len(roes)):
+        sum += float(roes[i]) * (i + 1)
+    return sum / 6
+
+def get_ec_and_roe(code):
+    EC = 0
+    try:
+        annual = get_fnguide(code)[11] # 연결-연간 재무제표
+        dates_list = list(annual.iloc[0][3:6])
+        if check_data_date(dates_list):
+            EC = annual.iloc[10][5]
+            roes = annual.iloc[18][3:6].tolist() # 최근 3개년 확정 ROE
+            # print(roes[0], roes[1], roes[2])
+        else:
+            print("check data fail")
+            roes = 0
+            EC = 0
+
+        if roes == 0:
+            return EC, roes
+        sum = 0
+        for i in range(0,len(roes)):
+            sum += float(roes[i]) * (i + 1)
+        ROE3y = sum / 6
+    except:
+        EC = 0
+        ROE3y = 0
+
+    return EC, ROE3y
 
 
-def iterate_stocksDB(row_num, this_col):
-    for i in range(2, row_num + 1):
-        this_cell = sheet.cell(i,this_col)
-        code = sheet.cell(i,2).value #종목 코드 컬럼
-        if this_col == 7:
-            this_cell.value = get_equity_capital(code)
-            print(sheet.cell(i,1).value, "- Equity capital :", this_cell.value)
-        elif this_col == 8:
-            this_cell.value = get_roe_weighted_mean(code)
-            print(sheet.cell(i,1).value, "- Weighted 3y ROE mean :", this_cell.value)
+def iterate_stocksDB(start_row, max_row):
+    for i in range(start_row, max_row + 1):
+        # this_cell = sheet.cell(i,this_col)
+        code = str(sheet.cell(i,2).value) #종목 코드 컬럼
+        while len(code) < 6:
+            code = '0'+code
+        EC, ROE3y = get_ec_and_roe(code)
+        sheet.cell(i, 7).value = EC
+        sheet.cell(i, 8).value = ROE3y
+        print(i, sheet.cell(i,1).value, "- Equity capital :", EC)
+        print(i, sheet.cell(i,1).value, "- Weighted 3y ROE mean :", ROE3y)
         workbook.save(STOCKS_DB_LOC)
 
-iterate_stocksDB(rows, 7)
-iterate_stocksDB(rows, 8)
+
+# iterate_stocksDB(1, rows)
+
+'''
+tables = get_fnguide('091440')
+for i in range(len(tables)):
+    print('-----', i, '-----------', '\n', tables[i])
+'''
 
 workbook.close()
