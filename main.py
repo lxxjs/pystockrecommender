@@ -32,8 +32,8 @@ def getDiscountRate(link, location) -> float:
     result = float(soup.select('td.ar.pr40')[location].text)
     return result
 
-a = getDiscountRate(KIS_LINK, DISCOUNT_RATE_LOC)
-print("Today's discount rate :", a)
+discount_rate = getDiscountRate(KIS_LINK, DISCOUNT_RATE_LOC)
+print("Today's discount rate :", discount_rate)
 
 
 '''
@@ -124,7 +124,7 @@ def get_ec_and_roe(code):
         annual = get_fnguide(code)[11] # 연결-연간 재무제표
         dates_list = list(annual.iloc[0][3:6])
         if check_data_date(dates_list):
-            EC = annual.iloc[10][5]
+            EC = annual.iloc[10][5] # 자기자본
             roes = annual.iloc[18][3:6].tolist() # 최근 3개년 확정 ROE
             # print(roes[0], roes[1], roes[2])
         else:
@@ -144,7 +144,6 @@ def get_ec_and_roe(code):
 
     return EC, ROE3y
 
-
 def iterate_stocksDB(start_row, max_row):
     for i in range(start_row, max_row + 1):
         # this_cell = sheet.cell(i,this_col)
@@ -158,8 +157,11 @@ def iterate_stocksDB(start_row, max_row):
         print(i, sheet.cell(i,1).value, "- Weighted 3y ROE mean :", ROE3y)
         workbook.save(STOCKS_DB_LOC)
 
+def get_proper_price(ec, roe, stocks_num, dc_rate): #stocks_num 어떻게 구하지 ...
+    corp_value = ec + (ec * (roe - dc_rate) / discount_rate)
+    return corp_value / stocks_num
 
-# iterate_stocksDB(1, rows)
+iterate_stocksDB(1233, rows)
 
 '''
 tables = get_fnguide('091440')

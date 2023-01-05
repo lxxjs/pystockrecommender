@@ -6,6 +6,8 @@
     : 할인율 = BBB- 등급 회사채 5년 수익률 (매일 갱신) https://www.kisrating.com/ratingsStatistics/statics_spread.do
     : 초과이익 = 자기자본 * (가중평균 3년 ROE - 할인율)
 - 적정주가 = 기업가치 / 유통주식수
+- 적정주가 = (자기자본 + (자기자본 * (ROE - 할인율) / 할인율)) / 유통주식수
+
 
 ## Open DART API
 - API Key: b64695f3f2a79d07bde772ffa630f935e0d050c0
