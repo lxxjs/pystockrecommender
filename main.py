@@ -144,29 +144,36 @@ def get_ec_and_roe(code):
 
     return EC, ROE3y
 
-def iterate_stocksDB(start_row, max_row):
-    for i in range(start_row, max_row + 1):
-        # this_cell = sheet.cell(i,this_col)
-        code = str(sheet.cell(i,2).value) #종목 코드 컬럼
-        while len(code) < 6:
-            code = '0'+code
-        EC, ROE3y = get_ec_and_roe(code)
-        sheet.cell(i, 7).value = EC
-        sheet.cell(i, 8).value = ROE3y
-        print(i, sheet.cell(i,1).value, "- Equity capital :", EC)
-        print(i, sheet.cell(i,1).value, "- Weighted 3y ROE mean :", ROE3y)
-        workbook.save(STOCKS_DB_LOC)
-
-def get_proper_price(ec, roe, stocks_num, dc_rate): #stocks_num 어떻게 구하지 ...
+def get_proper_price(ec, roe, stocks_num, dc_rate):
     corp_value = ec + (ec * (roe - dc_rate) / discount_rate)
     return corp_value / stocks_num
 
-iterate_stocksDB(1233, rows)
+def get_stocks_num_and_price(code):
+    general = get_fnguide(code)[0]
+    stocknum = general.iloc[5][1]
+    stocknum = int(stocknum[:stocknum.index('/')].replace(',', ''))
+    curr_price = general.columns[1]
+    curr_price = int(curr_price[:curr_price.index('/')].replace(',',''))
+    return stocknum, curr_price
 
-'''
-tables = get_fnguide('091440')
-for i in range(len(tables)):
-    print('-----', i, '-----------', '\n', tables[i])
-'''
+def iterate_stocksDB(start_row, max_row):
+    for i in range(start_row, max_row + 1):
+        code = str(sheet.cell(i,2).value) #종목 코드 컬럼
+        code.zfill(6)
+        #EC, ROE3y = get_ec_and_roe(code)
+        #sheet.cell(i, 7).value = EC
+        #sheet.cell(i, 8).value = ROE3y
+        stock_num , curr_price = get_stocks_num_and_price(code)
+        sheet.cell(i, 8).value = stock_num
+        sheet.cell(i, 9).value = curr_price
+        print(i, sheet.cell(i,1).value, "- num of stocks :", sheet.cell(i, 8).value)
+        print(i, sheet.cell(i,1).value, "- current price :", sheet.cell(i, 9).value)
+        PP = get_proper_price(int(sheet.cell(i, 7).value), float(sheet.cell(i, 8).value), int(sheet.cell(i, 8).value), discount_rate)
+        sheet.cell(i,10).value = PP
+        sheet.cell(i,11).value = PP / curr_price
+        print(sheet.cell(i,1).value, '\n', "Current price :", curr_price, '\n', "Proper price :", PP, '\n', "Potential X:", PP / curr_price)
+        workbook.save(STOCKS_DB_LOC)
+
+iterate_stocksDB(1, rows)
 
 workbook.close()
