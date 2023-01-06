@@ -145,8 +145,14 @@ def get_ec_and_roe(code):
     return EC, ROE3y
 
 def get_proper_price(ec, roe, stocks_num, dc_rate):
+    ec = ec + '00000000'
+    ec = float(ec)
+    roe = float(roe)
+    stocks_num = float(stocks_num)
+    dc_rate = float(dc_rate)
     corp_value = ec + (ec * (roe - dc_rate) / discount_rate)
-    return corp_value / stocks_num
+    X = round(corp_value / stocks_num, -1)
+    return X
 
 def get_stocks_num_and_price(code):
     general = get_fnguide(code)[0]
@@ -158,22 +164,31 @@ def get_stocks_num_and_price(code):
 
 def iterate_stocksDB(start_row, max_row):
     for i in range(start_row, max_row + 1):
-        code = str(sheet.cell(i,2).value) #종목 코드 컬럼
-        code.zfill(6)
-        #EC, ROE3y = get_ec_and_roe(code)
-        #sheet.cell(i, 7).value = EC
-        #sheet.cell(i, 8).value = ROE3y
-        stock_num , curr_price = get_stocks_num_and_price(code)
-        sheet.cell(i, 8).value = stock_num
-        sheet.cell(i, 9).value = curr_price
-        print(i, sheet.cell(i,1).value, "- num of stocks :", sheet.cell(i, 8).value)
-        print(i, sheet.cell(i,1).value, "- current price :", sheet.cell(i, 9).value)
-        PP = get_proper_price(int(sheet.cell(i, 7).value), float(sheet.cell(i, 8).value), int(sheet.cell(i, 8).value), discount_rate)
-        sheet.cell(i,10).value = PP
-        sheet.cell(i,11).value = PP / curr_price
-        print(sheet.cell(i,1).value, '\n', "Current price :", curr_price, '\n', "Proper price :", PP, '\n', "Potential X:", PP / curr_price)
-        workbook.save(STOCKS_DB_LOC)
+        if len(str(sheet.cell(i,2).value)) < 6:
+            try:
+                code = str(sheet.cell(i,2).value).zfill(6) #종목 코드 fill with zeros
+                #EC, ROE3y = get_ec_and_roe(code)
+                #sheet.cell(i, 7).value = EC
+                #sheet.cell(i, 8).value = ROE3y
+                if sheet.cell(i, 7).value is (None or 0) or sheet.cell(i, 8).value is (None or 0): # None 이랑 비교하는거아닐경우 isinstance() 사용 가능
+                    print("Data error")
+                    continue
+                stock_num , curr_price = get_stocks_num_and_price(code)
+                sheet.cell(i, 9).value = stock_num
+                sheet.cell(i, 10).value = curr_price
+                print(i, sheet.cell(i,1).value, "- num of stocks :", sheet.cell(i, 9).value)
+                print(i, sheet.cell(i,1).value, "- current price :", sheet.cell(i, 10).value)
+                PP = get_proper_price(sheet.cell(i, 7).value, sheet.cell(i, 8).value, stock_num, discount_rate)
+                sheet.cell(i,11).value = PP
+                sheet.cell(i,12).value = PP / curr_price
+                print(sheet.cell(i,1).value, '\n', "Current price :", curr_price, '\n', "Proper price :", PP, '\n', "Potential X:", round(PP / curr_price, 2))
+                workbook.save(STOCKS_DB_LOC)
+            except:
+                print("Error")
+                sheet.cell(i,11).value = 0
+                sheet.cell(i,12).value = 0
+                continue
 
-iterate_stocksDB(1, rows)
+iterate_stocksDB(2, rows)
 
 workbook.close()
