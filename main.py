@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 import openpyxl
 import pandas as pd
 import datetime
+import threading
 
 # 상수 선언
 ## 할인율
@@ -146,40 +147,65 @@ def get_stocks_num_and_price(code):
     except:
         return 0, 0
 
-def iterate_stocksDB(start_row, max_row):
-    for i in range(start_row, max_row + 1):
-        if len(str(sheet.cell(i,2).value)) < 6:
-            try:
-                code = str(sheet.cell(i,2).value).zfill(6) #종목 코드 fill with zeros
-                EC, ROE3y = get_ec_and_roe(code)
-                sheet.cell(i, 7).value = EC
-                sheet.cell(i, 8).value = ROE3y
-                if sheet.cell(i, 7).value is (None or 0) or sheet.cell(i, 8).value is (None or 0): # None 이랑 비교하는거아닐경우 isinstance() 사용 가능
-                    print("Data error")
-                    continue
-                stock_num, curr_price = get_stocks_num_and_price(code)
-                sheet.cell(i, 9).value = stock_num
-                sheet.cell(i, 10).value = curr_price
-                if sheet.cell(i, 9).value is (None or 0) or sheet.cell(i,10).value is (None or 0):
-                    print("Data error")
-                    continue
-                intrinsic_value = get_intrinsic_value(sheet.cell(i, 7).value, sheet.cell(i, 8).value, stock_num, discount_rate)
-                sheet.cell(i,11).value = intrinsic_value
-                sheet.cell(i,12).value = round(intrinsic_value / curr_price, 2)
-                print(i, sheet.cell(i,1).value, '\n', 
-                        "Equity Capital :", EC, '\n',
-                        "ROE :", ROE3y, '\n',
-                        "Num of Stocks :", stock_num, '\n',
-                        "Current price :", curr_price, '\n',
-                        "Intrinsic Value :", intrinsic_value, '\n',
-                        "Potential X:", round(intrinsic_value / curr_price, 2))
-                workbook.save(STOCKS_DB_LOC)
-            except:
-                print("Error")
-                sheet.cell(i,11).value = 0
-                sheet.cell(i,12).value = 0
-                continue
+lock = threading.Lock()
+semaphore = threading.BoundedSemaphore(10)
 
-# iterate_stocksDB(2, rows)
+def iterate_stocksDB(i, EC, ROE3y, stock_num, curr_price, intrinsic_value):
+    lock.acquire() # 데이터 오염 방지 / 한 파일에 동시에 접근할 때 안전성 확보
+    try:
+        sheet.cell(i, 7).value = EC
+        sheet.cell(i, 8).value = ROE3y
+        sheet.cell(i, 9).value = stock_num
+        sheet.cell(i, 10).value = curr_price
+        sheet.cell(i,11).value = intrinsic_value
+        sheet.cell(i,12).value = round(intrinsic_value / curr_price, 2)
+        print(i, sheet.cell(i,1).value, '\n', 
+                "Equity Capital :", EC, '\n',
+                "ROE :", ROE3y, '\n',
+                "Num of Stocks :", stock_num, '\n',
+                "Current price :", curr_price, '\n',
+                "Intrinsic Value :", intrinsic_value, '\n',
+                "Potential X:", round(intrinsic_value / curr_price, 2))
+        workbook.save(STOCKS_DB_LOC)
+        lock.release()
+    except:
+        print("Error")
+        sheet.cell(i,11).value = 0
+        sheet.cell(i,12).value = 0
+        lock.release()
+        return
+
+def pass_data(i, EC, ROE3y, stock_num, curr_price, intrinsic_value):
+    iterate_stocksDB(i, EC, ROE3y, stock_num, curr_price, intrinsic_value)
+    return
+
+def get_data(i):
+    semaphore.acquire() # Thread 수 제한
+    try:
+        if len(str(sheet.cell(i,2).value)) >= 6:
+            code = str(sheet.cell(i,2).value)
+            EC, ROE3y = get_ec_and_roe(code)
+            stock_num, curr_price = get_stocks_num_and_price(code)
+            intrinsic_value = get_intrinsic_value(EC, ROE3y, stock_num, discount_rate)
+            pass_data(i, EC, ROE3y, stock_num, curr_price, intrinsic_value)
+    except:
+        print("Get data Error")
+        pass_data(i, 0, 0, 0, 0, 0)
+    semaphore.release()
+    return
+
+
+
+if __name__ == '__main__':
+    threads = []
+    for i in range(51, 1250):
+        t = threading.Thread(target=get_data, args=(i, ))
+        t.start()
+        threads.append(t)
+
+    for thread in threads:
+        thread.join()
 
 workbook.close()
+
+#2023/1/8
