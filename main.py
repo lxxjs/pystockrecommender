@@ -5,7 +5,6 @@ import pandas as pd
 import requests
 from bs4 import BeautifulSoup
 import openpyxl
-import pandas as pd
 import datetime
 import threading
 
@@ -25,9 +24,6 @@ def getDiscountRate(link, location) -> float:
     result = float(soup.select('td.ar.pr40')[location].text)
     return result
 
-discount_rate = getDiscountRate(KIS_LINK, DISCOUNT_RATE_LOC)
-print("Today's discount rate :", discount_rate)
-
 # 주식 DB 읽기
 workbook = openpyxl.load_workbook(STOCKS_DB_LOC)
 sheet = workbook.active
@@ -36,7 +32,6 @@ cols = sheet.max_column
 workbook.close()
 
 ## 주식 명으로 주식코드 가져오기
-
 def get_code_by_name():
     target_name = input("주식명: ").upper()
     for row in range(2, rows + 1):
@@ -108,7 +103,6 @@ def get_ec_and_roe(code):
         if check_data_date(dates_list):
             EC = annual.iloc[10][5] # 자기자본
             roes = annual.iloc[18][3:6].tolist() # 최근 3개년 확정 ROE
-            # print(roes[0], roes[1], roes[2])
         else:
             print("check data fail")
             roes = 0
@@ -123,7 +117,6 @@ def get_ec_and_roe(code):
     except:
         EC = 0
         ROE3y = 0
-
     return EC, ROE3y
 
 def get_intrinsic_value(ec, roe, stocks_num, dc_rate):
@@ -148,7 +141,7 @@ def get_stocks_num_and_price(code):
         return 0, 0
 
 lock = threading.Lock()
-semaphore = threading.BoundedSemaphore(10)
+semaphore = threading.BoundedSemaphore(10) # 최대 쓰레드 수 10개
 
 def iterate_stocksDB(i, EC, ROE3y, stock_num, curr_price, intrinsic_value):
     lock.acquire() # 데이터 오염 방지 / 한 파일에 동시에 접근할 때 안전성 확보
@@ -166,14 +159,12 @@ def iterate_stocksDB(i, EC, ROE3y, stock_num, curr_price, intrinsic_value):
                 "Current price :", curr_price, '\n',
                 "Intrinsic Value :", intrinsic_value, '\n',
                 "Potential X:", round(intrinsic_value / curr_price, 2))
-        workbook.save(STOCKS_DB_LOC)
-        lock.release()
     except:
         print("Error")
         sheet.cell(i,11).value = 0
         sheet.cell(i,12).value = 0
-        lock.release()
-        return
+    workbook.save(STOCKS_DB_LOC)
+    lock.release()
 
 def pass_data(i, EC, ROE3y, stock_num, curr_price, intrinsic_value):
     iterate_stocksDB(i, EC, ROE3y, stock_num, curr_price, intrinsic_value)
@@ -186,6 +177,7 @@ def get_data(i):
             code = str(sheet.cell(i,2).value)
             EC, ROE3y = get_ec_and_roe(code)
             stock_num, curr_price = get_stocks_num_and_price(code)
+            discount_rate = getDiscountRate(KIS_LINK, DISCOUNT_RATE_LOC)
             intrinsic_value = get_intrinsic_value(EC, ROE3y, stock_num, discount_rate)
             pass_data(i, EC, ROE3y, stock_num, curr_price, intrinsic_value)
     except:
@@ -194,11 +186,9 @@ def get_data(i):
     semaphore.release()
     return
 
-
-
 if __name__ == '__main__':
     threads = []
-    for i in range(51, 1250):
+    for i in range(2, 4):
         t = threading.Thread(target=get_data, args=(i, ))
         t.start()
         threads.append(t)
