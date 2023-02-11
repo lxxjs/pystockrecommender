@@ -13,7 +13,6 @@ import threading
 DISCOUNT_RATE_LOC: int = 87 #BBB- 5y
 KIS_LINK: str = 'https://www.kisrating.com/ratingsStatistics/statics_spread.do'
 ## 다트 재무제표
-DART_API_KEY = 'b64695f3f2a79d07bde772ffa630f935e0d050c0'
 STOCKS_DB_LOC = '/workspace/PythonTrader/stocksDB.xlsx'
 ## Date Frame
 DATE_FRAME = ['2019/12', '2020/12', '2021/12']
