@@ -13,7 +13,7 @@ import threading
 DISCOUNT_RATE_LOC: int = 87 #BBB- 5y
 KIS_LINK: str = 'https://www.kisrating.com/ratingsStatistics/statics_spread.do'
 ## 다트 재무제표
-STOCKS_DB_LOC = '/workspace/PythonTrader/stocksDB.xlsx'
+STOCKS_DB_LOC = '/workspace/pystockrecommender/stocksDB_FINAL.xlsx'
 ## Date Frame
 DATE_FRAME = ['2019/12', '2020/12', '2021/12']
 
@@ -187,13 +187,15 @@ def get_data(i):
 
 if __name__ == '__main__':
     threads = []
-    for i in range(2, 4):
+    for i in range(1, rows):
         t = threading.Thread(target=get_data, args=(i, ))
         t.start()
         threads.append(t)
 
     for thread in threads:
         thread.join()
+
+
 
 workbook.close()
 
