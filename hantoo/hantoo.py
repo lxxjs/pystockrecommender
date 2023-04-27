@@ -3,9 +3,12 @@ import matplotlib.pyplot as plt
 import mojito
 from datetime import datetime,timezone,timedelta
 
-key = ""
-secret =  ""
-acc_no = ""
+with open("./api.key") as f:
+    lines = f.readlines()
+    key = lines[0].strip()
+    secret = lines[1].strip()
+    acc_no = lines[2].strip()
+    f.close()
 
 broker = mojito.KoreaInvestment(
     api_key = key,
