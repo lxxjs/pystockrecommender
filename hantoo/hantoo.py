@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import mojito
+from datetime import datetime,timezone,timedelta
 
 key = ""
 secret =  ""
@@ -59,17 +60,25 @@ def get_price_graph(code, dateType):
     graph = df['close'].plot(title=code+' '+dateType).get_figure()
     graph.savefig("%s%s.png"%(resp['output1']['hts_kor_isnm'], dateType))
 
-# broker.create_limit_buy_order(    
-#     symbol="005930",
-#     price=65000,
-#     quantity=1
-# )
+# balance = broker.fetch_balance()
+# print(balance)
+
 
 # a = get_total_evaluation()
 # b = get_avlb_amt()
 # print(a, b)
 
-# resp = broker.fetch_price("005930")
-# print(resp)
+def get_loss_cut_price(code, trade_type):
+    margin_rate = 0.01
+    base = get_base_price(code)
+    if trade_type == "long":
+        loss_cut = base - (base * margin_rate)
+    elif trade_type == "short":
+        loss_cut = base + (base * margin_rate)
+    return loss_cut
 
+# offset time diff (UTC -> KST)
+utc_time = datetime.utcnow()
+timezone_kst = timezone(timedelta(hours=9))
+kst_time = utc_time.astimezone(timezone_kst)
 
