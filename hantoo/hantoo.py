@@ -17,19 +17,19 @@ broker = mojito.KoreaInvestment(
     mock=True
 )
 
-def get_total_evaluation():
+def get_total_evaluation() -> int:
     resp = broker.fetch_balance()
     return int(resp['output2'][0]['tot_evlu_amt'])
 
-def get_avlb_amt():
+def get_avlb_amt() -> int:
     resp = broker.fetch_balance()
     return int(resp['output2'][0]['dnca_tot_amt'])
 
-def get_base_price(code):
+def get_base_price(code) -> int:
     resp = broker.fetch_price(code)
     return int(resp['output']['stck_sdpr'])
 
-def get_curr_price(code):
+def get_curr_price(code) -> int:
     resp = broker.fetch_price(code)
     return int(resp['output']['stck_prpr'])
 
@@ -37,19 +37,22 @@ def get_curr_price(code):
 # symbols = broker.fetch_kospi_symbols() 코스피 심볼들 받아오기
 
 def get_price_graph(code, dateType):
+    """
+    Date types format : "D" / "W" / "M"
+    """
+
     resp = broker.fetch_ohlcv(
         symbol=code,
         timeframe=dateType,
         adj_price=True
     )
-    #print(resp['output1']['hts_kor_isnm'])
+    # print(resp['output1']['hts_kor_isnm']) : 한글 종목명
 
     df = pd.DataFrame(resp['output2'])
     dt = pd.to_datetime(df['stck_bsop_date'], format="%Y%m%d")
     df.set_index(dt, inplace=True)
     df = df[['stck_oprc', 'stck_hgpr', 'stck_lwpr', 'stck_clpr']]
     df.columns = ['open', 'high', 'low', 'close']
-    #pd.to_numeric(df['close'], errors='ignore')
     df = df.apply(pd.to_numeric)
     df.index.name = "date"
 
@@ -60,18 +63,14 @@ def get_price_graph(code, dateType):
     elif dateType == "M":
         dateType = "Monthly"
 
-    graph = df['close'].plot(title=code+' '+dateType).get_figure()
-    graph.savefig("%s%s.png"%(resp['output1']['hts_kor_isnm'], dateType))
+    graph = df['close'].plot(title=f"{code} {dateType}").get_figure()
+    graph.savefig(f"{resp['output1']['hts_kor_isnm']}{dateType}.png")
 
-# balance = broker.fetch_balance()
-# print(balance)
-
-
-# a = get_total_evaluation()
-# b = get_avlb_amt()
-# print(a, b)
-
-def get_loss_cut_price(code, trade_type):
+def get_loss_cut_price(code, trade_type) -> float:
+    """
+    Trade types : "long" / "short"
+    """
+    # 금액별 호가 단위 반영 필요
     margin_rate = 0.01
     base = get_base_price(code)
     if trade_type == "long":
@@ -84,4 +83,5 @@ def get_loss_cut_price(code, trade_type):
 utc_time = datetime.utcnow()
 timezone_kst = timezone(timedelta(hours=9))
 kst_time = utc_time.astimezone(timezone_kst)
+
 
