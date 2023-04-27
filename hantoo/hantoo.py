@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import mojito
 from datetime import datetime,timezone,timedelta
 
-with open("./api.key") as f:
+with open("./mock_api.key") as f:
     lines = f.readlines()
     key = lines[0].strip()
     secret = lines[1].strip()
