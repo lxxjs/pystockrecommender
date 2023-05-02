@@ -1,19 +1,20 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import mojito
+import os
 from datetime import datetime,timezone,timedelta
-
+'''
 with open("./mock_api.key") as f:
     lines = f.readlines()
     key = lines[0].strip()
     secret = lines[1].strip()
     acc_no = lines[2].strip()
     f.close()
-
+'''
 broker = mojito.KoreaInvestment(
-    api_key = key,
-    api_secret = secret,
-    acc_no = acc_no,
+    api_key = os.environ['mock_key'],
+    api_secret = os.environ['mock_secret'],
+    acc_no = os.environ['mock_acc_no'],
     mock=True
 )
 
@@ -84,4 +85,4 @@ utc_time = datetime.utcnow()
 timezone_kst = timezone(timedelta(hours=9))
 kst_time = utc_time.astimezone(timezone_kst)
 
-
+print("hii")
