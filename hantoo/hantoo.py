@@ -1,3 +1,4 @@
+# backtesting : https://www.quantconnect.com/
 import pandas as pd
 import matplotlib.pyplot as plt
 import mojito
